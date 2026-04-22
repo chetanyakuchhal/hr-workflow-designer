@@ -1,4 +1,4 @@
-Replace your entire `README.md` with this:
+
 
 ```markdown
 # HR Workflow Designer
@@ -132,10 +132,4 @@ The simulator builds an adjacency map from the edge list and performs a standard
 - FastAPI + PostgreSQL backend for persistent workflow storage
 ```
 
-Then push:
 
-```bash
-git add README.md
-git commit -m "docs: rewrite README"
-git push origin main --force
-```
