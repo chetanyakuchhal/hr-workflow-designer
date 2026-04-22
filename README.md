@@ -1,130 +1,141 @@
-
+Replace your entire `README.md` with this:
 
 ```markdown
-# HR Workflow Designer — Tredence Case Study
-
-A visual HR Workflow Designer built with Next.js, React Flow, TypeScript, and Zustand. HR admins can create, configure, and simulate internal workflows like employee onboarding, leave approval, and document verification.
+# HR Workflow Designer
+**Tredence Studio · Full Stack Engineering Intern · Case Study Submission**
 
 ---
 
-## Getting Started
+## What This Is
+
+An interactive workflow builder that lets HR teams design, configure, and simulate internal processes — onboarding, leave approvals, document verification — directly on a visual canvas. Built from scratch with Next.js, React Flow, TypeScript, and Zustand.
+
+---
+
+## Running Locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open `http://localhost:3000`, pick a workflow, and start building.
 
 ---
 
-## Features
+## Core Capabilities
 
-### Workflow Canvas
-- Drag-and-drop nodes from the sidebar onto the canvas
-- Connect nodes with edges
-- Delete nodes and edges
-- Double-click any node to open its configuration form
-- Auto-validates basic constraints (Start node must exist for simulation)
+**Visual Canvas**
+Drag nodes from the panel onto the canvas, wire them together with edges, double-click to configure, and delete anything with a keystroke. The canvas includes a minimap and zoom controls out of the box.
 
-### Node Types
-| Node | Description |
-|---|---|
-| **Start** | Workflow entry point — configurable title and metadata key-value pairs |
-| **Task** | Human task — title, description, assignee, due date, custom key-value fields |
-| **Approval** | Approval step — approver role (Manager/HRBP/Director), auto-approve threshold |
-| **Automated Step** | System action — select from mock API action list, dynamic params per action |
-| **End** | Workflow completion — end message, summary flag toggle |
+**Five HR Node Types**
 
-### Mock API Layer (`src/mocks/api.ts`)
-- `GET /automations` — returns available automated actions with their parameter definitions
-- `POST /simulate` — accepts workflow JSON, performs BFS traversal from Start node, returns step-by-step execution log
+| Node | Purpose | Configurable Fields |
+|---|---|---|
+| Start | Workflow entry point | Title, metadata key-value pairs |
+| Task | Human-assigned work item | Title, description, assignee, due date, custom fields |
+| Approval | Sign-off gate | Title, approver role, auto-approve threshold |
+| Automated Step | System-triggered action | Title, action (from API), dynamic action params |
+| End | Workflow termination | End message, show-summary toggle |
 
-### Sandbox / Test Panel
-- Serializes the full workflow graph (nodes + edges)
-- Runs it through the simulate function
-- Displays a step-by-step execution log with status indicators
-- Validates that a Start node exists before running
+Every form is a controlled component with full TypeScript types. The interface — `{ id, type, data, updateData }` — is identical across all five panels, so adding a new node type follows a pattern you already know.
+
+**Mock API (`src/mocks/api.ts`)**
+
+Built to behave like a real service — typed interfaces, exported functions, no external dependencies.
+
+- `GET /automations` — list of system actions, each with an id, label, and parameter schema
+- `POST /simulate` — accepts a workflow graph, runs a BFS traversal from the Start node, returns a step-by-step execution log per node
+
+Replacing this with a real FastAPI or Express backend means changing one import path. Nothing else touches.
+
+**Simulation Sandbox**
+
+Hit the play button in the sidebar to serialize the full graph and run it through the simulator. The panel renders a timestamped log entry per node — type icon, label, status, and a plain-English description of what happened. Validates that a Start node exists before running.
 
 ---
 
-## Architecture
+## Project Structure
 
 ```
 src/
-├── app/                        # Next.js app router pages
-│   └── workflow/               # Workflow canvas page
-├── components/
-│   └── flow-builder/
-│       └── components/
-│           └── blocks/
-│               ├── nodes/      # One folder per node type
-│               │   ├── start.node.tsx
-│               │   ├── end.node.tsx
-│               │   ├── task-node/
-│               │   ├── approval-node/
-│               │   └── automated-step-node/
-│               ├── sidebar/
-│               │   └── panels/
-│               │       ├── available-nodes/   # Drag palette
-│               │       ├── node-properties/   # Per-node config forms
-│               │       └── sandbox/           # Simulation panel
-│               ├── types.ts    # Shared types and enums
-│               └── index.ts    # Node registry
-├── hooks/                      # Custom React hooks
-├── mocks/
-│   └── api.ts                  # Mock API (automations + simulate)
-├── services/                   # Mock data fetching
-└── stores/
-    └── flow-store.ts           # Zustand global state
+├── app/workflow/               # Canvas page (Next.js App Router)
+├── components/flow-builder/
+│   └── blocks/
+│       ├── nodes/              # Self-contained folder per node type
+│       │   ├── start.node.tsx
+│       │   ├── end.node.tsx
+│       │   ├── task-node/
+│       │   ├── approval-node/
+│       │   └── automated-step-node/
+│       ├── sidebar/panels/
+│       │   ├── available-nodes/    # Drag palette
+│       │   ├── node-properties/    # Per-node config forms
+│       │   └── sandbox/            # Simulation runner
+│       ├── types.ts                # Enums and shared interfaces
+│       └── index.ts                # Node registry
+├── hooks/                      # Custom hooks
+├── mocks/api.ts                 # Mock API
+├── services/                   # Workflow data layer
+└── stores/flow-store.ts         # Zustand store
 ```
-
-### Key Design Decisions
-
-**Node Registry Pattern** — Every node exports a `metadata` object containing its type, component, icon, default data, and property panel. The registry in `index.ts` auto-builds `NODE_TYPES`, `NODES_METADATA`, and `AVAILABLE_NODES` from this single source of truth. Adding a new node type requires only one new file and one line in `index.ts`.
-
-**Separation of Concerns** — Canvas logic lives in `flow-builder.tsx`, node rendering is isolated per node folder, API logic lives in `src/mocks/api.ts`, and state is managed centrally in Zustand. None of these layers know about each other directly.
-
-**Dynamic Property Panels** — Each node type declares its own `propertyPanel` component. The `NodePropertyPanel` looks up the correct panel at runtime via the registry — no switch statements, fully extensible.
-
-**Mock API as a Real Abstraction** — `src/mocks/api.ts` is structured to mirror a real REST API (typed interfaces, exported functions). Swapping it for a real backend requires only changing the import targets — no component changes needed.
-
-**BFS Simulation** — The `simulateWorkflow` function performs a breadth-first traversal of the graph starting from the Start node, producing an ordered execution log. This correctly handles linear and branching workflows.
 
 ---
 
-## Tech Stack
+## Architecture Decisions
 
-| Technology | Usage |
+**Registry over configuration**
+Each node exports a single `metadata` object — type, component, icon, default data, property panel. `index.ts` derives everything else (`NODE_TYPES`, `NODES_METADATA`, `AVAILABLE_NODES`) from that list automatically. A new node type = one new file + one new import. Nothing else changes.
+
+**Hard separation between layers**
+Canvas orchestration, node rendering, API calls, and global state live in four completely separate locations and do not import from each other directly. Each layer can be swapped or tested in isolation.
+
+**Runtime panel resolution**
+The property panel for a selected node is looked up through the registry at runtime — not through a switch statement or if-else chain. This means the form system scales to any number of node types without touching shared code.
+
+**BFS execution model**
+The simulator builds an adjacency map from the edge list and performs a standard breadth-first traversal from the Start node. This naturally handles both linear pipelines and branching workflows, visiting every reachable node exactly once.
+
+---
+
+## Stack
+
+| | |
 |---|---|
-| Next.js 14 | App framework (SSR, routing) |
-| React Flow (@xyflow/react) | Workflow canvas, nodes, edges |
-| TypeScript | Full type safety throughout |
-| Zustand + Immer | Global state management |
+| Next.js 14 | Framework, SSR, App Router |
+| @xyflow/react | Canvas, nodes, edges, handles |
+| TypeScript | Full type coverage |
+| Zustand + Immer | Global state, immutable updates |
 | Tailwind CSS | Styling |
-| shadcn/ui | UI component library |
-| nanoid | Unique ID generation |
+| shadcn/ui | UI primitives |
+| nanoid | ID generation |
 
 ---
 
-## What I Completed
+## Delivered
 
-- ✅ All 5 node types with full configuration forms
-- ✅ Drag-and-drop canvas with connect/delete
-- ✅ Mock API layer (automations + simulate)
-- ✅ Sandbox simulation panel with step-by-step log
-- ✅ Dynamic action parameters in Automated Step node
-- ✅ Two pre-built HR workflows (Onboarding, Leave Approval)
-- ✅ Dark/light theme toggle
-- ✅ MiniMap and zoom controls (bonus)
+- Five node types with complete configuration forms
+- Drag-and-drop canvas with edge connections and deletion
+- Mock API with automations list and BFS simulation
+- Sandbox panel with live step-by-step execution log
+- Dynamic parameter inputs on Automated Step (changes per action)
+- Two working HR workflows preloaded — Employee Onboarding, Leave Approval
+- Dark / light theme, MiniMap, zoom controls
 
-## What I Would Add With More Time
+## Given More Time
 
-- Export/Import workflow as JSON
-- Workflow validation errors shown visually on nodes (red border)
-- Undo/Redo using `useUndoable`
-- Auto-layout using ELKjs or Dagre
-- Unit tests with Jest/RTL for node forms and simulation logic
-- Persistent storage via a real backend (FastAPI + PostgreSQL)
+- Cycle detection with visual error indicators on offending nodes
+- JSON export and import for saving/sharing workflows
+- Undo / Redo via `useUndoable`
+- Auto-layout with Dagre or ELKjs
+- Jest + RTL unit tests for forms and simulation logic
+- FastAPI + PostgreSQL backend for persistent workflow storage
 ```
 
+Then push:
+
+```bash
+git add README.md
+git commit -m "docs: rewrite README"
+git push origin main --force
+```
