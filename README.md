@@ -1,4 +1,4 @@
-Create a new file `README.md` in the root of your project and paste this:
+
 
 ```markdown
 # HR Workflow Designer — Tredence Case Study
@@ -128,14 +128,3 @@ src/
 - Persistent storage via a real backend (FastAPI + PostgreSQL)
 ```
 
----
-
-Once saved, do these final steps before submitting:
-
-```bash
-git add .
-git commit -m "feat: HR Workflow Designer - Tredence case study"
-git push
-```
-
-Then submit your GitHub URL. You're done! 🎉
